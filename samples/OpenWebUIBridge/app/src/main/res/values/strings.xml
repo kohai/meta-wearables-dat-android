@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" project="openwebuibridge">
+
+    <!-- Home Screen -->
+    <string name="register_button_title" description="Connect App">Connect my glasses</string>
+    <string name="unregister_button_title" description="Disconnect App">Disconnect</string>
+    <string name="stream_button_title" description="Start streaming">Start bridge</string>
+    <string name="stop_stream_button_title" description="Stop streaming">Stop streaming</string>
+    <string name="stop_bridge_button_title" description="Stop bridge">Stop bridge</string>
+    <string name="start_camera_stream_button_title" description="Start camera stream">Start camera</string>
+    <string name="stop_camera_stream_button_title" description="Stop camera stream">Stop camera</string>
+    <string name="home_tip_video_title" description="Tip title about video capture">Glasses View</string>
+    <string name="home_tip_audio_title" description="Tip title about Open WebUI">Open WebUI</string>
+    <string name="home_tip_hands_title" description="Tip title about hands free">Local Bridge</string>
+    <string name="home_tip_video" description="Tip about video capture">Stream a first-person camera frame from your Meta glasses.</string>
+    <string name="home_tip_audio" description="Tip about Open WebUI">Send the current frame and a prompt to an Open WebUI model through its API.</string>
+    <string name="home_tip_hands" description="Tip about hands free">Keep the app as the bridge between DAT device access and your own model stack.</string>
+    <string name="home_redirect_message" description="Redirect message">You\'ll be redirected to the Meta AI app to confirm your connection.</string>
+
+    <!-- Stream Screen -->
+    <string name="live_stream" description="Live Stream">Live stream</string>
+    <string name="openwebui_base_url" description="Open WebUI API endpoint">Open WebUI API endpoint</string>
+    <string name="openwebui_api_key" description="Open WebUI API key">API key</string>
+    <string name="openwebui_model" description="Open WebUI model">Model</string>
+    <string name="openwebui_load_models" description="Load Open WebUI models button">Load models</string>
+    <string name="openwebui_loading_models" description="Open WebUI models loading button">Loading...</string>
+    <string name="openwebui_select_model" description="Select Open WebUI model button">Select model</string>
+    <string name="openwebui_system_prompt" description="Open WebUI system prompt">System prompt</string>
+    <string name="openwebui_prompt" description="Open WebUI prompt">Prompt</string>
+    <string name="openwebui_ask" description="Ask Open WebUI button">Ask</string>
+    <string name="openwebui_snapshot_ask" description="Ask Open WebUI using captured snapshot button">Snapshot ask</string>
+    <string name="openwebui_voice_ask" description="Ask Open WebUI using voice button">Voice ask</string>
+    <string name="openwebui_asking" description="Open WebUI request in progress">Asking...</string>
+    <string name="openwebui_listening" description="Voice recognition in progress">Listening...</string>
+    <string name="bridge_running" description="Bridge session running status">Bridge running</string>
+    <string name="bridge_starting" description="Bridge session starting status">Bridge starting</string>
+    <string name="bridge_camera_starting" description="Camera stream starting status">Camera starting</string>
+    <string name="camera_stream_running" description="Camera stream running status">Camera stream running</string>
+    <string name="camera_stream_off" description="Camera stream off status">Camera stream off</string>
+    <string name="openwebui_response_empty" description="Empty Open WebUI response placeholder">Use voice ask for any question, or start the camera when you want to ask about what the glasses can see.</string>
+    <string name="show_settings" description="Show settings button">Show settings</string>
+    <string name="hide_settings" description="Hide settings button">Hide settings</string>
+    <string name="auto_speak_responses" description="Auto speak responses setting">Auto-speak responses</string>
+    <string name="copy_response" description="Copy response button">Copy</string>
+    <string name="share_response" description="Share response button">Share</string>
+    <string name="speak_response" description="Speak response button">Speak</string>
+    <string name="stop_speaking_response" description="Stop speaking response button">Stop speaking</string>
+
+    <!-- Non Stream Screen -->
+    <string name="camera_access_icon_description" description="Open WebUI Bridge icon description">Open WebUI Bridge icon</string>
+    <string name="non_stream_screen_description" description="Non stream screen description">Start the bridge to stream a glasses camera frame and send it to Open WebUI.</string>
+    <string name="non_stream_screen_title" description="Non stream screen title">Bridge Glasses to Open WebUI</string>
+    <string name="waiting_for_active_device" description="Waiting for active device message">Waiting for an active device</string>
+
+    <!-- SharePhotoDialog -->
+    <string name="photo_captured" description="Photo Captured">Photo Captured</string>
+    <string name ="captured_photo" description="Captured Photo">Captured Photo</string>
+    <string name ="capture_photo" description="Capture Photo">Capture Photo</string>
+    <string name="share" description="Share">Share</string>
+
+    <!-- Mock Device Kit Screen -->
+    <string name="mock_device_kit_title" description="Mock Device Kit Title">Mock Device Kit</string>
+    <string name="devices_paired_count" description="Number of devices paired"><xliff:g id="count">%1$d</xliff:g> device(s) paired</string>
+    <string name="mock_device_kit_description" description="Mock Device Kit Description">This screen handles simulating devices, mocking capabilities and states</string>
+    <string name="enable_mock_device_kit" description="Enable MockDeviceKit button">Enable MockDeviceKit</string>
+    <string name="disable_mock_device_kit" description="Disable MockDeviceKit button">Disable MockDeviceKit</string>
+    <string name="pair_rayban_meta" description="Pair RayBan Meta">Pair RayBan Meta</string>
+    <string name="unpair" description="Unpair">Unpair</string>
+    <string name="power_on" description="Power On">Power On</string>
+    <string name="power_off" description="Power Off">Power Off</string>
+    <string name="unfold" description="Unfold">Unfold</string>
+    <string name="fold" description="Fold">Fold</string>
+    <string name="don" description="Don">Don</string>
+    <string name="doff" description="Doff">Doff</string>
+    <string name="select_video" description="Select video">Select video</string>
+    <string name="has_camera_feed" description="Has camera feed">Has camera feed</string>
+    <string name="no_camera_feed" description="No camera feed">No camera feed</string>
+    <string name="select_image" description="Select image">Select image</string>
+    <string name="has_captured_image" description="Has captured image">Has captured image</string>
+    <string name="no_captured_image" description="No captured image">No captured image</string>
+    <string name="front_camera" description="Front camera">Front Camera</string>
+    <string name="back_camera" description="Back camera">Back Camera</string>
+    <string name="camera_source_active" description="Camera source active">Camera: <xliff:g id="facing">%1$s</xliff:g></string>
+    <string name="no_camera_source" description="No camera source">No camera source</string>
+    <string name="camera_source_label" description="Camera source dropdown label">Camera Source: <xliff:g id="source">%1$s</xliff:g></string>
+    <string name="camera_source_none" description="Camera source none">None</string>
+    <string name="camera_source_video_file" description="Camera source video file">Video File</string>
+    <string name="power" description="Power toggle label">Power</string>
+    <string name="donned" description="Donned toggle label">Donned</string>
+    <string name="unfolded" description="Unfolded toggle label">Unfolded</string>
+
+    <!-- Getting Started Sheet -->
+    <string name="getting_started_title" description="Getting Started sheet title">Getting started</string>
+    <string name="getting_started_tip_permission" description="Tip about camera permission">First, Open WebUI Bridge needs permission to use your glasses camera.</string>
+    <string name="getting_started_tip_led" description="Tip about capture LED">The capture LED lets others know when you\'re capturing content or going live.</string>
+    <string name="getting_started_tip_photo" description="Tip about Open WebUI">Enter an Open WebUI API endpoint, API key, model, and prompt before asking about a frame.</string>
+    <string name="getting_started_continue" description="Continue button">Continue</string>
+</resources>
