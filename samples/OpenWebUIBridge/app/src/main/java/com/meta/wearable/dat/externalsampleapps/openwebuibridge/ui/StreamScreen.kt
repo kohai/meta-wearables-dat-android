@@ -73,10 +73,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meta.wearable.dat.camera.types.StreamSessionState
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.BuildConfig
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.R
+import com.meta.wearable.dat.externalsampleapps.openwebuibridge.stream.SnapshotImageQuality
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.stream.StreamUiState
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.stream.StreamViewModel
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.wearables.AppThemeMode
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.wearables.WearablesViewModel
+
 @Composable
 fun StreamScreen(
     wearablesViewModel: WearablesViewModel,
@@ -96,6 +98,7 @@ fun StreamScreen(
   val isCameraStarting = streamUiState.streamSessionState == StreamSessionState.STARTING
   val isCameraEnabled = streamUiState.streamSessionState != StreamSessionState.STOPPED
   var modelMenuExpanded by remember { mutableStateOf(false) }
+  var snapshotImageQualityMenuExpanded by remember { mutableStateOf(false) }
   var isSettingsExpanded by remember { mutableStateOf(false) }
   val context = LocalContext.current
   val clipboardManager = LocalClipboardManager.current
@@ -131,6 +134,10 @@ fun StreamScreen(
           SettingsPanel(
               modelMenuExpanded = modelMenuExpanded,
               onModelMenuExpandedChange = { modelMenuExpanded = it },
+              snapshotImageQualityMenuExpanded = snapshotImageQualityMenuExpanded,
+              onSnapshotImageQualityMenuExpandedChange = {
+                snapshotImageQualityMenuExpanded = it
+              },
               streamViewModel = streamViewModel,
               streamUiState = streamUiState,
               themeMode = wearablesUiState.appThemeMode,
@@ -465,6 +472,8 @@ private fun ResponseActions(
 private fun SettingsPanel(
     modelMenuExpanded: Boolean,
     onModelMenuExpandedChange: (Boolean) -> Unit,
+    snapshotImageQualityMenuExpanded: Boolean,
+    onSnapshotImageQualityMenuExpandedChange: (Boolean) -> Unit,
     streamViewModel: StreamViewModel,
     streamUiState: StreamUiState,
     themeMode: AppThemeMode,
@@ -585,6 +594,35 @@ private fun SettingsPanel(
       }
     }
     Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Text(
+          text = stringResource(R.string.snapshot_image_quality),
+          style = MaterialTheme.typography.bodyLarge,
+      )
+      Box {
+        TextButton(onClick = { onSnapshotImageQualityMenuExpandedChange(true) }) {
+          Text(snapshotImageQualityLabel(streamUiState.snapshotImageQuality))
+        }
+        DropdownMenu(
+            expanded = snapshotImageQualityMenuExpanded,
+            onDismissRequest = { onSnapshotImageQualityMenuExpandedChange(false) },
+        ) {
+          SnapshotImageQuality.values().forEach { quality ->
+            DropdownMenuItem(
+                text = { Text(snapshotImageQualityLabel(quality)) },
+                onClick = {
+                  streamViewModel.updateSnapshotImageQuality(quality)
+                  onSnapshotImageQualityMenuExpandedChange(false)
+                },
+            )
+          }
+        }
+      }
+    }
+    Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.CenterVertically,
@@ -626,6 +664,14 @@ private fun SettingsPanel(
     )
   }
 }
+
+@Composable
+private fun snapshotImageQualityLabel(quality: SnapshotImageQuality): String =
+    when (quality) {
+      SnapshotImageQuality.STANDARD -> stringResource(R.string.snapshot_image_quality_standard)
+      SnapshotImageQuality.HIGH -> stringResource(R.string.snapshot_image_quality_high)
+      SnapshotImageQuality.ORIGINAL -> stringResource(R.string.snapshot_image_quality_original)
+    }
 
 @Composable
 private fun ThemeModeButton(label: String, selected: Boolean, onClick: () -> Unit) {

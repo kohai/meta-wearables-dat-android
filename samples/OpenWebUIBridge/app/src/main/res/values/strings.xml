@@ -37,6 +37,10 @@
     <string name="app_theme_system" description="System theme mode option">System</string>
     <string name="app_theme_light" description="Light theme mode option">Light</string>
     <string name="app_theme_dark" description="Dark theme mode option">Dark</string>
+    <string name="snapshot_image_quality" description="Snapshot image quality setting label">Snapshot image quality</string>
+    <string name="snapshot_image_quality_standard" description="Standard snapshot image quality option">Standard - 896px - JPEG 82</string>
+    <string name="snapshot_image_quality_high" description="High snapshot image quality option">High - 1600px - JPEG 92</string>
+    <string name="snapshot_image_quality_original" description="Original snapshot image quality option">Original - no resize - JPEG 95</string>
     <string name="openwebui_system_prompt" description="Open WebUI system prompt">System prompt</string>
     <string name="openwebui_prompt" description="Open WebUI prompt">Prompt</string>
     <string name="openwebui_ask" description="Ask Open WebUI button">Ask</string>

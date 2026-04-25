@@ -54,6 +54,7 @@ import com.meta.wearable.dat.core.session.DeviceSessionState
 import com.meta.wearable.dat.core.session.Session
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.openwebui.OpenWebUiChatSession
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.openwebui.OpenWebUiClient
+import com.meta.wearable.dat.externalsampleapps.openwebuibridge.openwebui.OpenWebUiImageOptions
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.openwebui.OpenWebUiModelsResult
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.openwebui.OpenWebUiResult
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.wearables.WearablesViewModel
@@ -84,9 +85,13 @@ class StreamViewModel(
     private const val KEY_OPEN_WEB_UI_CHAT_ID = "open_web_ui_chat_id"
     private const val KEY_OPEN_WEB_UI_SESSION_ID = "open_web_ui_session_id"
     private const val KEY_AUTO_SPEAK_RESPONSE = "auto_speak_response"
+    private const val KEY_SNAPSHOT_IMAGE_QUALITY = "snapshot_image_quality"
     private const val KEY_OPEN_WEB_UI_SYSTEM_PROMPT = "open_web_ui_system_prompt"
     private const val KEY_OPEN_WEB_UI_PROMPT = "open_web_ui_prompt"
     private val SESSION_TERMINAL_STATES = setOf(StreamSessionState.CLOSED)
+
+    private fun readSnapshotImageQuality(value: String?): SnapshotImageQuality =
+        SnapshotImageQuality.values().firstOrNull { it.name == value } ?: SnapshotImageQuality.HIGH
   }
 
   private val deviceSelector: DeviceSelector = wearablesViewModel.deviceSelector
@@ -104,6 +109,8 @@ class StreamViewModel(
         openWebUiChatId = settings.getString(KEY_OPEN_WEB_UI_CHAT_ID, "").orEmpty(),
         openWebUiSessionId = settings.getString(KEY_OPEN_WEB_UI_SESSION_ID, "").orEmpty(),
         isAutoSpeakResponseEnabled = settings.getBoolean(KEY_AUTO_SPEAK_RESPONSE, false),
+        snapshotImageQuality =
+          readSnapshotImageQuality(settings.getString(KEY_SNAPSHOT_IMAGE_QUALITY, null)),
         openWebUiSystemPrompt =
           settings.getString(KEY_OPEN_WEB_UI_SYSTEM_PROMPT, StreamUiState().openWebUiSystemPrompt)
             ?: StreamUiState().openWebUiSystemPrompt,
@@ -197,6 +204,11 @@ class StreamViewModel(
   fun updateAutoSpeakResponseEnabled(value: Boolean) {
     _uiState.update { it.copy(isAutoSpeakResponseEnabled = value, openWebUiError = null) }
     settings.edit().putBoolean(KEY_AUTO_SPEAK_RESPONSE, value).apply()
+  }
+
+  fun updateSnapshotImageQuality(value: SnapshotImageQuality) {
+    _uiState.update { it.copy(snapshotImageQuality = value, openWebUiError = null) }
+    settings.edit().putString(KEY_SNAPSHOT_IMAGE_QUALITY, value.name).apply()
   }
 
   fun speakResponse() {
@@ -654,6 +666,7 @@ class StreamViewModel(
           isAutoSpeakResponseEnabled = it.isAutoSpeakResponseEnabled,
           openWebUiSystemPrompt = it.openWebUiSystemPrompt,
           openWebUiPrompt = it.openWebUiPrompt,
+          snapshotImageQuality = it.snapshotImageQuality,
           openWebUiChatId = it.openWebUiChatId,
           openWebUiSessionId = it.openWebUiSessionId,
           openWebUiModels = it.openWebUiModels,
@@ -759,6 +772,11 @@ class StreamViewModel(
         prompt = prompt,
         systemPrompt = _uiState.value.openWebUiSystemPrompt,
         image = image,
+        imageOptions =
+            OpenWebUiImageOptions(
+                maxDimension = _uiState.value.snapshotImageQuality.maxDimension,
+                jpegQuality = _uiState.value.snapshotImageQuality.jpegQuality,
+            ),
         chatSession = currentOpenWebUiChatSession(),
         chatTitle = "Open WebUI Bridge",
     )

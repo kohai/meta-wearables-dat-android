@@ -15,6 +15,15 @@ package com.meta.wearable.dat.externalsampleapps.openwebuibridge.stream
 import android.graphics.Bitmap
 import com.meta.wearable.dat.camera.types.StreamSessionState
 
+enum class SnapshotImageQuality(
+    val maxDimension: Int,
+    val jpegQuality: Int,
+) {
+  STANDARD(maxDimension = 896, jpegQuality = 82),
+  HIGH(maxDimension = 1600, jpegQuality = 92),
+  ORIGINAL(maxDimension = Int.MAX_VALUE, jpegQuality = 95),
+}
+
 data class StreamUiState(
     val isBridgeRunning: Boolean = false,
     val streamSessionState: StreamSessionState = StreamSessionState.STOPPED,
@@ -31,6 +40,7 @@ data class StreamUiState(
     val openWebUiModels: List<String> = emptyList(),
     val isLoadingOpenWebUiModels: Boolean = false,
     val isAutoSpeakResponseEnabled: Boolean = false,
+    val snapshotImageQuality: SnapshotImageQuality = SnapshotImageQuality.HIGH,
     val openWebUiSystemPrompt: String =
         "You are being used hands-free through Meta smart glasses. The user may be walking, looking at the scene through the glasses camera, and listening to spoken responses. Be concise, practical, and describe visual details only when they matter.",
     val openWebUiPrompt: String = "What is visible in this glasses camera frame?",

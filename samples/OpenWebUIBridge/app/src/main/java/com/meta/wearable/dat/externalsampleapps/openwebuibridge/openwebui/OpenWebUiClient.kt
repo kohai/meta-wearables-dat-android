@@ -25,6 +25,11 @@ data class OpenWebUiChatSession(
     val sessionId: String,
 )
 
+data class OpenWebUiImageOptions(
+    val maxDimension: Int,
+    val jpegQuality: Int,
+)
+
 sealed interface OpenWebUiResult {
   data class Success(
       val content: String,
@@ -103,6 +108,7 @@ class OpenWebUiClient {
       systemPrompt: String,
       prompt: String,
       image: Bitmap,
+      imageOptions: OpenWebUiImageOptions,
       chatSession: OpenWebUiChatSession?,
       chatTitle: String,
   ): OpenWebUiResult =
@@ -113,6 +119,7 @@ class OpenWebUiClient {
           systemPrompt = systemPrompt,
           prompt = prompt,
           image = image,
+          imageOptions = imageOptions,
           chatSession = chatSession,
           chatTitle = chatTitle,
       )
@@ -133,6 +140,7 @@ class OpenWebUiClient {
           systemPrompt = systemPrompt,
           prompt = prompt,
           image = null,
+          imageOptions = null,
           chatSession = chatSession,
           chatTitle = chatTitle,
       )
@@ -144,6 +152,7 @@ class OpenWebUiClient {
       systemPrompt: String,
       prompt: String,
       image: Bitmap?,
+      imageOptions: OpenWebUiImageOptions?,
       chatSession: OpenWebUiChatSession?,
       chatTitle: String,
   ): OpenWebUiResult =
@@ -168,7 +177,7 @@ class OpenWebUiClient {
                 is OpenWebUiResult.Success -> result.chatSession
               }
 
-          val imageBytes = image?.toJpegBytes()
+          val imageBytes = image?.toJpegBytes(imageOptions ?: OpenWebUiImageOptions(1600, 92))
           val uploadedFile =
               imageBytes?.let { bytes ->
                 when (val result = uploadImage(baseUrl, apiKey, bytes)) {
@@ -797,10 +806,10 @@ class OpenWebUiClient {
     }
   }
 
-  private fun Bitmap.toJpegBytes(): ByteArray {
-    val scaledImage = scaleToMaxDimension(this, 896)
+  private fun Bitmap.toJpegBytes(imageOptions: OpenWebUiImageOptions): ByteArray {
+    val scaledImage = scaleToMaxDimension(this, imageOptions.maxDimension)
     val output = ByteArrayOutputStream()
-    scaledImage.compress(Bitmap.CompressFormat.JPEG, 82, output)
+    scaledImage.compress(Bitmap.CompressFormat.JPEG, imageOptions.jpegQuality.coerceIn(0, 100), output)
     if (scaledImage !== this) {
       scaledImage.recycle()
     }
