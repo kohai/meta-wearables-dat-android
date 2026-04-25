@@ -26,6 +26,8 @@ data class StreamUiState(
     val openWebUiBaseUrl: String = "",
     val openWebUiApiKey: String = "",
     val openWebUiModel: String = "",
+    val openWebUiChatId: String = "",
+    val openWebUiSessionId: String = "",
     val openWebUiModels: List<String> = emptyList(),
     val isLoadingOpenWebUiModels: Boolean = false,
     val isAutoSpeakResponseEnabled: Boolean = false,

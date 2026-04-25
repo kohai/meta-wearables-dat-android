@@ -17,6 +17,12 @@ import com.meta.wearable.dat.core.types.RegistrationState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
+enum class AppThemeMode {
+  SYSTEM,
+  LIGHT,
+  DARK,
+}
+
 data class WearablesUiState(
     val registrationState: RegistrationState = RegistrationState.Unavailable(),
     val devices: ImmutableList<DeviceIdentifier> = persistentListOf(),
@@ -26,6 +32,7 @@ data class WearablesUiState(
     val isGettingStartedSheetVisible: Boolean = false,
     val hasActiveDevice: Boolean = false,
     val canRegister: Boolean = false,
+    val appThemeMode: AppThemeMode = AppThemeMode.SYSTEM,
 ) {
   val isRegistered: Boolean =
       registrationState is RegistrationState.Registered ||

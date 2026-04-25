@@ -13,6 +13,7 @@ import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,14 +22,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddComment
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.StopCircle
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.VideocamOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -55,9 +71,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meta.wearable.dat.camera.types.StreamSessionState
+import com.meta.wearable.dat.externalsampleapps.openwebuibridge.BuildConfig
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.R
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.stream.StreamUiState
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.stream.StreamViewModel
+import com.meta.wearable.dat.externalsampleapps.openwebuibridge.wearables.AppThemeMode
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.wearables.WearablesViewModel
 @Composable
 fun StreamScreen(
@@ -73,6 +91,7 @@ fun StreamScreen(
         ),
 ) {
   val streamUiState by streamViewModel.uiState.collectAsStateWithLifecycle()
+  val wearablesUiState by wearablesViewModel.uiState.collectAsStateWithLifecycle()
   val isCameraStreaming = streamUiState.streamSessionState == StreamSessionState.STREAMING
   val isCameraStarting = streamUiState.streamSessionState == StreamSessionState.STARTING
   val isCameraEnabled = streamUiState.streamSessionState != StreamSessionState.STOPPED
@@ -86,55 +105,27 @@ fun StreamScreen(
   Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
     Box(modifier = Modifier.fillMaxSize()) {
       Column(
-          modifier = Modifier.fillMaxSize().systemBarsPadding().padding(16.dp),
-          verticalArrangement = Arrangement.spacedBy(10.dp),
+          modifier = Modifier.fillMaxSize().systemBarsPadding(),
+          verticalArrangement = Arrangement.spacedBy(0.dp),
       ) {
-        StreamStatusHeader(
+        ChatTopBar(
             isBridgeRunning = streamUiState.isBridgeRunning,
             isCameraStreaming = isCameraStreaming,
             isCameraStarting = isCameraStarting,
+            model = streamUiState.openWebUiModel,
+            onNewChat = { streamViewModel.startNewOpenWebUiChat() },
+            onToggleSettings = { isSettingsExpanded = !isSettingsExpanded },
         )
 
-        streamUiState.videoFrame?.let { videoFrame ->
-          key(streamUiState.videoFrameCount) {
-            Image(
-                bitmap = videoFrame.asImageBitmap(),
-                contentDescription = stringResource(R.string.live_stream),
-                modifier = Modifier.fillMaxWidth().height(88.dp),
-                contentScale = ContentScale.Crop,
-            )
-          }
-        }
-
-        ResponsePanel(
-            response = streamUiState.openWebUiResponse,
-            error = streamUiState.openWebUiError,
-            voiceTranscript = streamUiState.voiceTranscript,
+        ChatTimeline(
+            streamUiState = streamUiState,
+            isCameraStreaming = isCameraStreaming,
+            onCopy = { response -> clipboardManager.setText(AnnotatedString(response)) },
+            onShare = { response -> shareText(context, response) },
+            onSpeak = { streamViewModel.speakResponse() },
+            onStopSpeaking = { streamViewModel.stopSpeakingResponse() },
             modifier = Modifier.weight(1f),
         )
-
-        streamUiState.openWebUiResponse?.let { response ->
-          ResponseActions(
-              isSpeakingResponse = streamUiState.isSpeakingResponse,
-              onCopy = { clipboardManager.setText(AnnotatedString(response)) },
-              onShare = { shareText(context, response) },
-              onSpeak = { streamViewModel.speakResponse() },
-              onStopSpeaking = { streamViewModel.stopSpeakingResponse() },
-          )
-        }
-
-        TextButton(
-            onClick = { isSettingsExpanded = !isSettingsExpanded },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-          Text(
-              if (isSettingsExpanded) {
-                stringResource(R.string.hide_settings)
-              } else {
-                stringResource(R.string.show_settings)
-              }
-          )
-        }
 
         if (isSettingsExpanded) {
           SettingsPanel(
@@ -142,15 +133,28 @@ fun StreamScreen(
               onModelMenuExpandedChange = { modelMenuExpanded = it },
               streamViewModel = streamViewModel,
               streamUiState = streamUiState,
+              themeMode = wearablesUiState.appThemeMode,
+              onThemeModeChange = wearablesViewModel::updateAppThemeMode,
+              isDebugMenuVisible = wearablesUiState.isDebugMenuVisible,
+              onDebugMenuVisibleChange = { visible ->
+                if (visible) {
+                  wearablesViewModel.showDebugMenu()
+                } else {
+                  wearablesViewModel.hideDebugMenu()
+                }
+              },
+              modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
           )
         }
 
-        PrimaryControls(
+        ChatComposer(
+            streamUiState = streamUiState,
             isCameraEnabled = isCameraEnabled,
             isCameraStreaming = isCameraStreaming,
             isBusy = streamUiState.isAskingOpenWebUi,
             isBridgeRunning = streamUiState.isBridgeRunning,
             isListeningForVoice = streamUiState.isListeningForVoice,
+            onPromptChange = streamViewModel::updateOpenWebUiPrompt,
             onStopBridge = {
               streamViewModel.stopStream()
               wearablesViewModel.navigateToDeviceSelection()
@@ -158,7 +162,6 @@ fun StreamScreen(
             onToggleCamera = { streamViewModel.toggleCameraStream() },
             onVoiceAsk = { streamViewModel.startVoiceAsk() },
             onSnapshotAsk = { streamViewModel.askOpenWebUiAboutSnapshot() },
-            onCapture = { streamViewModel.capturePhoto() },
         )
       }
 
@@ -183,74 +186,241 @@ fun StreamScreen(
 }
 
 @Composable
-private fun StreamStatusHeader(
+private fun ChatTopBar(
     isBridgeRunning: Boolean,
     isCameraStreaming: Boolean,
     isCameraStarting: Boolean,
+    model: String,
+    onNewChat: () -> Unit,
+    onToggleSettings: () -> Unit,
 ) {
-  Row(
+  Surface(
       modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.CenterVertically,
+      color = MaterialTheme.colorScheme.surface,
+      tonalElevation = 2.dp,
+  ) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+      Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Column(modifier = Modifier.weight(1f)) {
+          Text(text = stringResource(R.string.chat_app_title), style = MaterialTheme.typography.titleMedium)
+          Text(
+              text = model.ifBlank { stringResource(R.string.openwebui_model_not_selected) },
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              maxLines = 1,
+          )
+        }
+        IconButton(onClick = onNewChat) {
+          Icon(Icons.Default.AddComment, contentDescription = stringResource(R.string.openwebui_new_chat))
+        }
+        IconButton(onClick = onToggleSettings) {
+          Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.show_settings))
+        }
+      }
+      Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+      ) {
+        StatusPill(
+            text =
+                if (isBridgeRunning) {
+                  stringResource(R.string.bridge_running)
+                } else {
+                  stringResource(R.string.bridge_starting)
+                },
+        )
+        StatusPill(
+            text =
+                when {
+                  isCameraStarting -> stringResource(R.string.bridge_camera_starting)
+                  isCameraStreaming -> stringResource(R.string.camera_stream_running)
+                  else -> stringResource(R.string.camera_stream_off)
+                },
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun StatusPill(text: String) {
+  Surface(
+      shape = RoundedCornerShape(8.dp),
+      color = MaterialTheme.colorScheme.surfaceVariant,
   ) {
     Text(
-        text =
-            if (isBridgeRunning) {
-              stringResource(R.string.bridge_running)
-            } else {
-              stringResource(R.string.bridge_starting)
-            },
-        style = MaterialTheme.typography.titleMedium,
-    )
-    Text(
-        text =
-            when {
-              isCameraStarting -> stringResource(R.string.bridge_camera_starting)
-              isCameraStreaming -> stringResource(R.string.camera_stream_running)
-              else -> stringResource(R.string.camera_stream_off)
-            },
-        style = MaterialTheme.typography.bodyMedium,
+        text = text,
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
   }
 }
 
 @Composable
-private fun ResponsePanel(
-    response: String?,
-    error: String?,
-    voiceTranscript: String?,
+private fun ChatTimeline(
+    streamUiState: StreamUiState,
+    isCameraStreaming: Boolean,
+    onCopy: (String) -> Unit,
+    onShare: (String) -> Unit,
+    onSpeak: () -> Unit,
+    onStopSpeaking: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+  Column(
+      modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(14.dp),
+  ) {
+    GlassesContextCard(streamUiState = streamUiState, isCameraStreaming = isCameraStreaming)
+
+    val hasConversation =
+        streamUiState.openWebUiResponse != null ||
+            streamUiState.openWebUiError != null ||
+            streamUiState.isAskingOpenWebUi ||
+            streamUiState.voiceTranscript != null
+
+    if (!hasConversation) {
+      EmptyChatState()
+    } else {
+      val userText = streamUiState.voiceTranscript ?: streamUiState.openWebUiPrompt
+      UserMessageBubble(text = userText)
+
+      when {
+        streamUiState.isAskingOpenWebUi -> AssistantMessageBubble(text = stringResource(R.string.openwebui_asking))
+        streamUiState.openWebUiError != null -> ErrorMessageBubble(text = streamUiState.openWebUiError)
+        streamUiState.openWebUiResponse != null -> {
+          AssistantMessageBubble(text = streamUiState.openWebUiResponse)
+          ResponseActions(
+              isSpeakingResponse = streamUiState.isSpeakingResponse,
+              onCopy = { onCopy(streamUiState.openWebUiResponse) },
+              onShare = { onShare(streamUiState.openWebUiResponse) },
+              onSpeak = onSpeak,
+              onStopSpeaking = onStopSpeaking,
+          )
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun GlassesContextCard(streamUiState: StreamUiState, isCameraStreaming: Boolean) {
   Surface(
-      modifier = modifier.fillMaxWidth(),
+      modifier = Modifier.fillMaxWidth(),
       shape = RoundedCornerShape(8.dp),
       color = MaterialTheme.colorScheme.surfaceVariant,
   ) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    Row(
+        modifier = Modifier.padding(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-      when {
-        response != null ->
-            SelectionContainer {
-              Text(text = response, style = MaterialTheme.typography.bodyLarge)
-            }
-        error != null ->
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        else ->
-            Text(
-                text = stringResource(R.string.openwebui_response_empty),
-                style = MaterialTheme.typography.bodyLarge,
-            )
+      val frame = streamUiState.videoFrame
+      if (frame != null) {
+        key(streamUiState.videoFrameCount) {
+          Image(
+              bitmap = frame.asImageBitmap(),
+              contentDescription = stringResource(R.string.live_stream),
+              modifier = Modifier.size(width = 96.dp, height = 64.dp),
+              contentScale = ContentScale.Crop,
+          )
+        }
+      } else {
+        Box(
+            modifier = Modifier.size(width = 96.dp, height = 64.dp).background(MaterialTheme.colorScheme.surface),
+            contentAlignment = Alignment.Center,
+        ) {
+          Icon(Icons.Default.VideocamOff, contentDescription = null)
+        }
       }
-      voiceTranscript?.let { transcript ->
-        Text(text = transcript, style = MaterialTheme.typography.bodyMedium)
+      Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(text = stringResource(R.string.glasses_context_title), style = MaterialTheme.typography.titleSmall)
+        Text(
+            text =
+                if (isCameraStreaming) {
+                  stringResource(R.string.glasses_context_live)
+                } else {
+                  stringResource(R.string.glasses_context_standby)
+                },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
       }
     }
+  }
+}
+
+@Composable
+private fun EmptyChatState() {
+  Column(
+      modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(10.dp),
+  ) {
+    Icon(
+        imageVector = Icons.Default.CameraAlt,
+        contentDescription = null,
+        modifier = Modifier.size(40.dp),
+        tint = MaterialTheme.colorScheme.primary,
+    )
+    Text(text = stringResource(R.string.chat_empty_title), style = MaterialTheme.typography.titleMedium)
+    Text(
+        text = stringResource(R.string.openwebui_response_empty),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+  }
+}
+
+@Composable
+private fun UserMessageBubble(text: String) {
+  Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+    Surface(
+        modifier = Modifier.widthIn(max = 300.dp),
+        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 8.dp, bottomEnd = 2.dp),
+        color = MaterialTheme.colorScheme.primary,
+    ) {
+      Text(
+          text = text,
+          modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+          style = MaterialTheme.typography.bodyLarge,
+          color = MaterialTheme.colorScheme.onPrimary,
+      )
+    }
+  }
+}
+
+@Composable
+private fun AssistantMessageBubble(text: String) {
+  Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Text(
+        text = stringResource(R.string.openwebui_assistant_label),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    SelectionContainer {
+      Text(text = text, style = MaterialTheme.typography.bodyLarge)
+    }
+  }
+}
+
+@Composable
+private fun ErrorMessageBubble(text: String) {
+  Surface(
+      modifier = Modifier.fillMaxWidth(),
+      shape = RoundedCornerShape(8.dp),
+      color = MaterialTheme.colorScheme.errorContainer,
+  ) {
+    Text(
+        text = text,
+        modifier = Modifier.padding(12.dp),
+        color = MaterialTheme.colorScheme.onErrorContainer,
+        style = MaterialTheme.typography.bodyMedium,
+    )
   }
 }
 
@@ -262,34 +432,31 @@ private fun ResponseActions(
     onSpeak: () -> Unit,
     onStopSpeaking: () -> Unit,
 ) {
-  Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-      TextButton(onClick = onCopy, modifier = Modifier.weight(1f)) {
-        Text(stringResource(R.string.copy_response))
-      }
-      TextButton(onClick = onShare, modifier = Modifier.weight(1f)) {
-        Text(stringResource(R.string.share_response))
-      }
+  Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+  ) {
+    TextButton(onClick = onCopy, modifier = Modifier.weight(1f)) {
+      Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+      Text(stringResource(R.string.copy_response))
     }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    TextButton(onClick = onShare, modifier = Modifier.weight(1f)) {
+      Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+      Text(stringResource(R.string.share_response))
+    }
+    TextButton(
+        onClick = if (isSpeakingResponse) onStopSpeaking else onSpeak,
+        modifier = Modifier.weight(1f),
     ) {
-      TextButton(onClick = onSpeak, enabled = !isSpeakingResponse, modifier = Modifier.weight(1f)) {
-        Text(stringResource(R.string.speak_response))
-      }
-      TextButton(
-          onClick = onStopSpeaking,
-          enabled = isSpeakingResponse,
-          modifier = Modifier.weight(1f),
-      ) {
-        Text(stringResource(R.string.stop_speaking_response))
-      }
+      Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(16.dp))
+      Text(
+          if (isSpeakingResponse) {
+            stringResource(R.string.stop_speaking_response)
+          } else {
+            stringResource(R.string.speak_response)
+          }
+      )
     }
   }
 }
@@ -300,9 +467,14 @@ private fun SettingsPanel(
     onModelMenuExpandedChange: (Boolean) -> Unit,
     streamViewModel: StreamViewModel,
     streamUiState: StreamUiState,
+    themeMode: AppThemeMode,
+    onThemeModeChange: (AppThemeMode) -> Unit,
+    isDebugMenuVisible: Boolean,
+    onDebugMenuVisibleChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
   Column(
-      modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+      modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
       verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
     OutlinedTextField(
@@ -375,6 +547,61 @@ private fun SettingsPanel(
         verticalAlignment = Alignment.CenterVertically,
     ) {
       Text(
+        text = stringResource(R.string.app_theme_mode),
+        style = MaterialTheme.typography.bodyLarge,
+      )
+      Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+      ThemeModeButton(
+        label = stringResource(R.string.app_theme_system),
+        selected = themeMode == AppThemeMode.SYSTEM,
+        onClick = { onThemeModeChange(AppThemeMode.SYSTEM) },
+      )
+      ThemeModeButton(
+        label = stringResource(R.string.app_theme_light),
+        selected = themeMode == AppThemeMode.LIGHT,
+        onClick = { onThemeModeChange(AppThemeMode.LIGHT) },
+      )
+      ThemeModeButton(
+        label = stringResource(R.string.app_theme_dark),
+        selected = themeMode == AppThemeMode.DARK,
+        onClick = { onThemeModeChange(AppThemeMode.DARK) },
+      )
+      }
+    }
+    if (BuildConfig.DEBUG) {
+      Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Text(
+            text = stringResource(R.string.mock_device_kit_title),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Switch(
+            checked = isDebugMenuVisible,
+            onCheckedChange = onDebugMenuVisibleChange,
+        )
+      }
+    }
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      TextButton(
+          onClick = { streamViewModel.startNewOpenWebUiChat() },
+          modifier = Modifier.weight(1f),
+      ) {
+        Text(stringResource(R.string.openwebui_new_chat))
+      }
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Text(
           text = stringResource(R.string.auto_speak_responses),
           style = MaterialTheme.typography.bodyLarge,
       )
@@ -401,19 +628,55 @@ private fun SettingsPanel(
 }
 
 @Composable
-private fun PrimaryControls(
+private fun ThemeModeButton(label: String, selected: Boolean, onClick: () -> Unit) {
+  Surface(
+      shape = RoundedCornerShape(8.dp),
+      color =
+          if (selected) {
+            MaterialTheme.colorScheme.primaryContainer
+          } else {
+            MaterialTheme.colorScheme.surfaceVariant
+          },
+      onClick = onClick,
+  ) {
+    Text(
+        text = label,
+        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+        style = MaterialTheme.typography.labelMedium,
+        color =
+            if (selected) {
+              MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+              MaterialTheme.colorScheme.onSurfaceVariant
+            },
+    )
+  }
+}
+
+@Composable
+private fun ChatComposer(
+  streamUiState: StreamUiState,
     isCameraEnabled: Boolean,
     isCameraStreaming: Boolean,
     isBusy: Boolean,
     isBridgeRunning: Boolean,
     isListeningForVoice: Boolean,
+  onPromptChange: (String) -> Unit,
     onStopBridge: () -> Unit,
     onToggleCamera: () -> Unit,
     onVoiceAsk: () -> Unit,
     onSnapshotAsk: () -> Unit,
-    onCapture: () -> Unit,
 ) {
-  Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+  Surface(modifier = Modifier.fillMaxWidth(), tonalElevation = 3.dp) {
+  Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    OutlinedTextField(
+        value = streamUiState.openWebUiPrompt,
+        onValueChange = onPromptChange,
+        label = { Text(stringResource(R.string.openwebui_prompt)) },
+        minLines = 1,
+        maxLines = 3,
+        modifier = Modifier.fillMaxWidth(),
+    )
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -427,7 +690,8 @@ private fun PrimaryControls(
                 stringResource(R.string.openwebui_voice_ask)
               },
           onClick = onVoiceAsk,
-            enabled = isBridgeRunning && !isListeningForVoice && !isBusy,
+          icon = Icons.Default.Mic,
+          enabled = isBridgeRunning && !isListeningForVoice && !isBusy,
           modifier = Modifier.weight(1f),
       )
       SwitchButton(
@@ -438,6 +702,7 @@ private fun PrimaryControls(
                 stringResource(R.string.openwebui_snapshot_ask)
               },
           onClick = onSnapshotAsk,
+              icon = Icons.Default.CameraAlt,
           enabled = isCameraStreaming && !isBusy,
           modifier = Modifier.weight(1f),
       )
@@ -455,17 +720,19 @@ private fun PrimaryControls(
                 stringResource(R.string.start_camera_stream_button_title)
               },
           onClick = onToggleCamera,
+          icon = if (isCameraEnabled) Icons.Default.VideocamOff else Icons.Default.Videocam,
           enabled = isBridgeRunning && !isBusy,
           modifier = Modifier.weight(1f),
       )
       SwitchButton(
           label = stringResource(R.string.stop_bridge_button_title),
           onClick = onStopBridge,
+          icon = Icons.Default.StopCircle,
           isDestructive = true,
           modifier = Modifier.weight(1f),
       )
-      CaptureButton(onClick = onCapture)
     }
+  }
   }
 }
 

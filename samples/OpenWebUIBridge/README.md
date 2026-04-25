@@ -1,16 +1,17 @@
 # Open WebUI Bridge Sample
 
 This sample Android app demonstrates a bridge between Meta Wearables DAT camera access and an
-Open WebUI server. It streams a frame from Meta glasses, JPEG-encodes the current preview frame, and
-sends it to Open WebUI's chat-completions API with a user prompt.
+Open WebUI server. It streams a frame from Meta glasses, JPEG-encodes the current preview frame,
+uploads snapshots through Open WebUI's files API, and sends them to Open WebUI's chat-completions
+API with a user prompt.
 
 ## What it demonstrates
 
 - DAT app registration and camera permission flow
 - Glasses camera streaming through `mwdat-camera`
 - MockDeviceKit testing support inherited from the CameraAccess sample
-- A minimal Open WebUI API client using `POST /api/chat/completions`
-- Vision-style chat-completions payloads with a base64 JPEG data URL
+- A minimal Open WebUI API client using chat sessions and `POST /api/v1/chat/completions`
+- Vision-style chat-completions payloads with a base64 JPEG data URL and Open WebUI file metadata
 - A configurable system prompt that tells the model it is responding through Meta glasses
 - Copy, share, and Android text-to-speech playback for assistant responses
 
@@ -35,7 +36,8 @@ sends it to Open WebUI's chat-completions API with a user prompt.
 
 1. Enable Developer Mode for your glasses in the Meta AI app.
 1. Launch the sample and connect through the Meta AI registration flow.
-1. Start the bridge after an active device appears.
+1. The bridge starts automatically after an active device appears. Use **Stop bridge** to return to
+  device selection when needed.
 1. Enter:
   - Open WebUI API endpoint, for example for an emulator talking to the host machine
    - API key
@@ -53,6 +55,12 @@ emulator URLs. Use HTTPS and stricter network security settings for a production
 
 - The sample stores the Open WebUI endpoint, API key, selected model, system prompt, and prompt in
   app-private local preferences so they are available the next time you open the bridge.
+- The app follows the Android system light/dark setting by default. Use **Theme** in settings to
+  override it to light or dark mode.
+- Each ask is attached to an Open WebUI chat session so follow-up questions can use the prior
+  conversation. Use **New chat** in settings to start a fresh server-side conversation.
+- Snapshot asks upload the JPEG to `/api/v1/files/` and attach the returned file metadata to the
+  user message so the image appears in Open WebUI chat history.
 - The selected Open WebUI model must support image input. Text-only models will not analyze the
   frame correctly.
 - Response playback uses Android `TextToSpeech` routed toward the current Bluetooth communication

@@ -39,9 +39,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,9 +80,20 @@ fun NonStreamScreen(
   val activity = LocalActivity.current
   val context = LocalContext.current
 
-  MaterialTheme(colorScheme = darkColorScheme()) {
-    Box(
-        modifier = modifier.fillMaxSize().background(Color.Black).padding(all = 24.dp),
+  LaunchedEffect(
+      uiState.isRegistered,
+      uiState.hasActiveDevice,
+      uiState.isGettingStartedSheetVisible,
+  ) {
+    viewModel.autoNavigateToStreaming(onRequestWearablesPermission)
+  }
+
+  Box(
+      modifier =
+        modifier
+          .fillMaxSize()
+          .background(MaterialTheme.colorScheme.background)
+          .padding(all = 24.dp),
         contentAlignment = Alignment.Center,
     ) {
       Box(modifier = Modifier.align(Alignment.TopEnd).systemBarsPadding()) {
@@ -90,7 +101,7 @@ fun NonStreamScreen(
           Icon(
               imageVector = Icons.Default.LinkOff,
               contentDescription = "DisconnectIcon",
-              tint = Color.White,
+              tint = MaterialTheme.colorScheme.onBackground,
               modifier = Modifier.size(28.dp),
           )
         }
@@ -124,7 +135,7 @@ fun NonStreamScreen(
         Icon(
             painter = painterResource(id = R.drawable.camera_access_icon),
             contentDescription = stringResource(R.string.camera_access_icon_description),
-            tint = Color.White,
+            tint = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.size(80.dp * LocalDensity.current.density),
         )
         Text(
@@ -132,12 +143,12 @@ fun NonStreamScreen(
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
             text = stringResource(R.string.non_stream_screen_description),
             textAlign = TextAlign.Center,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
         )
       }
 
@@ -154,13 +165,13 @@ fun NonStreamScreen(
             Icon(
                 painter = painterResource(id = R.drawable.hourglass_icon),
                 contentDescription = "Waiting for device",
-                tint = Color.White.copy(alpha = 0.7f),
+                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                 modifier = Modifier.size(16.dp),
             )
             Text(
                 text = stringResource(R.string.waiting_for_active_device),
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
           }
         }
@@ -189,7 +200,6 @@ fun NonStreamScreen(
           )
         }
       }
-    }
   }
 }
 

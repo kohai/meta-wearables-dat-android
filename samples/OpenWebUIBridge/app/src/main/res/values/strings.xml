@@ -19,12 +19,24 @@
 
     <!-- Stream Screen -->
     <string name="live_stream" description="Live Stream">Live stream</string>
+    <string name="chat_app_title" description="Open WebUI chat bridge app title">Open WebUI Bridge</string>
+    <string name="openwebui_model_not_selected" description="No model selected label">Select a model</string>
+    <string name="openwebui_assistant_label" description="Assistant message label">Open WebUI</string>
+    <string name="glasses_context_title" description="Glasses context panel title">Meta glasses context</string>
+    <string name="glasses_context_live" description="Glasses camera live status">Live camera frame attached to snapshot asks</string>
+    <string name="glasses_context_standby" description="Glasses camera standby status">Start the camera to attach what the glasses can see</string>
+    <string name="chat_empty_title" description="Empty chat screen title">Start a glasses-aware chat</string>
     <string name="openwebui_base_url" description="Open WebUI API endpoint">Open WebUI API endpoint</string>
     <string name="openwebui_api_key" description="Open WebUI API key">API key</string>
     <string name="openwebui_model" description="Open WebUI model">Model</string>
     <string name="openwebui_load_models" description="Load Open WebUI models button">Load models</string>
     <string name="openwebui_loading_models" description="Open WebUI models loading button">Loading...</string>
     <string name="openwebui_select_model" description="Select Open WebUI model button">Select model</string>
+    <string name="openwebui_new_chat" description="Start a new Open WebUI chat session button">New chat</string>
+    <string name="app_theme_mode" description="App theme mode setting label">Theme</string>
+    <string name="app_theme_system" description="System theme mode option">System</string>
+    <string name="app_theme_light" description="Light theme mode option">Light</string>
+    <string name="app_theme_dark" description="Dark theme mode option">Dark</string>
     <string name="openwebui_system_prompt" description="Open WebUI system prompt">System prompt</string>
     <string name="openwebui_prompt" description="Open WebUI prompt">Prompt</string>
     <string name="openwebui_ask" description="Ask Open WebUI button">Ask</string>

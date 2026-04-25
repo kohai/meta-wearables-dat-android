@@ -52,6 +52,7 @@ import com.meta.wearable.dat.core.Wearables
 import com.meta.wearable.dat.core.selectors.DeviceSelector
 import com.meta.wearable.dat.core.session.DeviceSessionState
 import com.meta.wearable.dat.core.session.Session
+import com.meta.wearable.dat.externalsampleapps.openwebuibridge.openwebui.OpenWebUiChatSession
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.openwebui.OpenWebUiClient
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.openwebui.OpenWebUiModelsResult
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.openwebui.OpenWebUiResult
@@ -80,6 +81,8 @@ class StreamViewModel(
     private const val KEY_OPEN_WEB_UI_BASE_URL = "open_web_ui_base_url"
     private const val KEY_OPEN_WEB_UI_API_KEY = "open_web_ui_api_key"
     private const val KEY_OPEN_WEB_UI_MODEL = "open_web_ui_model"
+    private const val KEY_OPEN_WEB_UI_CHAT_ID = "open_web_ui_chat_id"
+    private const val KEY_OPEN_WEB_UI_SESSION_ID = "open_web_ui_session_id"
     private const val KEY_AUTO_SPEAK_RESPONSE = "auto_speak_response"
     private const val KEY_OPEN_WEB_UI_SYSTEM_PROMPT = "open_web_ui_system_prompt"
     private const val KEY_OPEN_WEB_UI_PROMPT = "open_web_ui_prompt"
@@ -98,6 +101,8 @@ class StreamViewModel(
             ?: StreamUiState().openWebUiBaseUrl,
         openWebUiApiKey = settings.getString(KEY_OPEN_WEB_UI_API_KEY, "").orEmpty(),
         openWebUiModel = settings.getString(KEY_OPEN_WEB_UI_MODEL, "").orEmpty(),
+        openWebUiChatId = settings.getString(KEY_OPEN_WEB_UI_CHAT_ID, "").orEmpty(),
+        openWebUiSessionId = settings.getString(KEY_OPEN_WEB_UI_SESSION_ID, "").orEmpty(),
         isAutoSpeakResponseEnabled = settings.getBoolean(KEY_AUTO_SPEAK_RESPONSE, false),
         openWebUiSystemPrompt =
           settings.getString(KEY_OPEN_WEB_UI_SYSTEM_PROMPT, StreamUiState().openWebUiSystemPrompt)
@@ -125,18 +130,58 @@ class StreamViewModel(
   private var presentationQueue: PresentationQueue? = null
 
   fun updateOpenWebUiBaseUrl(value: String) {
-    _uiState.update { it.copy(openWebUiBaseUrl = value, openWebUiError = null) }
-    settings.edit().putString(KEY_OPEN_WEB_UI_BASE_URL, value).apply()
+    _uiState.update {
+      it.copy(
+          openWebUiBaseUrl = value,
+          openWebUiChatId = "",
+          openWebUiSessionId = "",
+          openWebUiError = null,
+      )
+    }
+    settings.edit()
+        .putString(KEY_OPEN_WEB_UI_BASE_URL, value)
+        .remove(KEY_OPEN_WEB_UI_CHAT_ID)
+        .remove(KEY_OPEN_WEB_UI_SESSION_ID)
+        .apply()
   }
 
   fun updateOpenWebUiApiKey(value: String) {
-    _uiState.update { it.copy(openWebUiApiKey = value, openWebUiError = null) }
-    settings.edit().putString(KEY_OPEN_WEB_UI_API_KEY, value).apply()
+    _uiState.update {
+      it.copy(
+          openWebUiApiKey = value,
+          openWebUiChatId = "",
+          openWebUiSessionId = "",
+          openWebUiError = null,
+      )
+    }
+    settings.edit()
+        .putString(KEY_OPEN_WEB_UI_API_KEY, value)
+        .remove(KEY_OPEN_WEB_UI_CHAT_ID)
+        .remove(KEY_OPEN_WEB_UI_SESSION_ID)
+        .apply()
   }
 
   fun updateOpenWebUiModel(value: String) {
-    _uiState.update { it.copy(openWebUiModel = value, openWebUiError = null) }
-    settings.edit().putString(KEY_OPEN_WEB_UI_MODEL, value).apply()
+    _uiState.update {
+      it.copy(
+          openWebUiModel = value,
+          openWebUiChatId = "",
+          openWebUiSessionId = "",
+          openWebUiError = null,
+      )
+    }
+    settings.edit()
+        .putString(KEY_OPEN_WEB_UI_MODEL, value)
+        .remove(KEY_OPEN_WEB_UI_CHAT_ID)
+        .remove(KEY_OPEN_WEB_UI_SESSION_ID)
+        .apply()
+  }
+
+  fun startNewOpenWebUiChat() {
+    _uiState.update {
+      it.copy(openWebUiChatId = "", openWebUiSessionId = "", openWebUiError = null)
+    }
+    settings.edit().remove(KEY_OPEN_WEB_UI_CHAT_ID).remove(KEY_OPEN_WEB_UI_SESSION_ID).apply()
   }
 
   fun updateOpenWebUiPrompt(value: String) {
@@ -212,6 +257,30 @@ class StreamViewModel(
     }
   }
 
+  private fun currentOpenWebUiChatSession(): OpenWebUiChatSession? {
+    val state = _uiState.value
+    if (state.openWebUiChatId.isBlank() || state.openWebUiSessionId.isBlank()) {
+      return null
+    }
+    return OpenWebUiChatSession(
+        chatId = state.openWebUiChatId,
+        sessionId = state.openWebUiSessionId,
+    )
+  }
+
+  private fun persistOpenWebUiChatSession(chatSession: OpenWebUiChatSession) {
+    _uiState.update {
+      it.copy(
+          openWebUiChatId = chatSession.chatId,
+          openWebUiSessionId = chatSession.sessionId,
+      )
+    }
+    settings.edit()
+        .putString(KEY_OPEN_WEB_UI_CHAT_ID, chatSession.chatId)
+        .putString(KEY_OPEN_WEB_UI_SESSION_ID, chatSession.sessionId)
+        .apply()
+  }
+
   fun refreshOpenWebUiModels() {
     if (_uiState.value.isLoadingOpenWebUiModels) {
       return
@@ -272,6 +341,7 @@ class StreamViewModel(
       val result = tryAskOpenWebUiAboutImage(state.openWebUiPrompt, frame)
       when (result) {
         is OpenWebUiResult.Success -> {
+          persistOpenWebUiChatSession(result.chatSession)
           _uiState.update { it.copy(isAskingOpenWebUi = false, openWebUiResponse = result.content) }
           maybeSpeakResponse(result.content)
         }
@@ -322,6 +392,7 @@ class StreamViewModel(
             val openWebUiResult = tryAskOpenWebUiAboutImage(prompt, image)
             when (openWebUiResult) {
               is OpenWebUiResult.Success -> {
+                persistOpenWebUiChatSession(openWebUiResult.chatSession)
                 _uiState.update {
                   it.copy(
                       isAskingOpenWebUi = false,
@@ -376,6 +447,7 @@ class StreamViewModel(
       val result = tryAskOpenWebUiAboutText(prompt)
       when (result) {
         is OpenWebUiResult.Success -> {
+          persistOpenWebUiChatSession(result.chatSession)
           _uiState.update { it.copy(isAskingOpenWebUi = false, openWebUiResponse = result.content) }
           maybeSpeakResponse(result.content)
         }
@@ -582,6 +654,8 @@ class StreamViewModel(
           isAutoSpeakResponseEnabled = it.isAutoSpeakResponseEnabled,
           openWebUiSystemPrompt = it.openWebUiSystemPrompt,
           openWebUiPrompt = it.openWebUiPrompt,
+          openWebUiChatId = it.openWebUiChatId,
+          openWebUiSessionId = it.openWebUiSessionId,
           openWebUiModels = it.openWebUiModels,
       )
     }
@@ -685,6 +759,8 @@ class StreamViewModel(
         prompt = prompt,
         systemPrompt = _uiState.value.openWebUiSystemPrompt,
         image = image,
+        chatSession = currentOpenWebUiChatSession(),
+        chatTitle = "Open WebUI Bridge",
     )
   }
 
@@ -695,6 +771,8 @@ class StreamViewModel(
         model = _uiState.value.openWebUiModel,
         prompt = prompt,
         systemPrompt = _uiState.value.openWebUiSystemPrompt,
+        chatSession = currentOpenWebUiChatSession(),
+        chatTitle = "Open WebUI Bridge",
     )
   }
 

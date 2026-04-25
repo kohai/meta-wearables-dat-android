@@ -18,6 +18,7 @@ package com.meta.wearable.dat.externalsampleapps.openwebuibridge.wearables
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.meta.wearable.dat.core.Wearables
@@ -38,9 +39,20 @@ import kotlinx.coroutines.launch
 class WearablesViewModel(application: Application) : AndroidViewModel(application) {
   companion object {
     private const val TAG = "WearablesViewModel"
+    private const val SETTINGS_NAME = "open_webui_bridge_app_settings"
+    private const val KEY_APP_THEME_MODE = "app_theme_mode"
   }
 
-  private val _uiState = MutableStateFlow(WearablesUiState())
+  private val settings = application.getSharedPreferences(SETTINGS_NAME, Context.MODE_PRIVATE)
+  private val _uiState =
+      MutableStateFlow(
+          WearablesUiState(
+              appThemeMode =
+                  settings.getString(KEY_APP_THEME_MODE, AppThemeMode.SYSTEM.name)
+                      ?.let { value -> runCatching { AppThemeMode.valueOf(value) }.getOrNull() }
+                      ?: AppThemeMode.SYSTEM
+          )
+      )
   val uiState: StateFlow<WearablesUiState> = _uiState.asStateFlow()
 
   // AutoDeviceSelector automatically selects the first available wearable device.
@@ -48,6 +60,7 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
   private var deviceSelectorJob: Job? = null
 
   private var monitoringStarted = false
+  private var hasAutoNavigatedToStreaming = false
   private val deviceMonitoringJobs = mutableMapOf<DeviceIdentifier, Job>()
 
   private fun startMonitoring() {
@@ -70,6 +83,9 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
         val previousState = _uiState.value.registrationState
         val showGettingStartedSheet =
             value is RegistrationState.Registered && previousState is RegistrationState.Registering
+        if (value !is RegistrationState.Registered && value !is RegistrationState.Unregistering) {
+          hasAutoNavigatedToStreaming = false
+        }
         _uiState.update {
           it.copy(registrationState = value, isGettingStartedSheetVisible = showGettingStartedSheet)
         }
@@ -150,8 +166,29 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
     }
   }
 
+  fun autoNavigateToStreaming(onRequestWearablesPermission: suspend (Permission) -> PermissionStatus) {
+    val currentState = _uiState.value
+    if (
+        hasAutoNavigatedToStreaming ||
+            currentState.isStreaming ||
+            !currentState.isRegistered ||
+            !currentState.hasActiveDevice ||
+            currentState.isGettingStartedSheetVisible
+    ) {
+      return
+    }
+
+    hasAutoNavigatedToStreaming = true
+    navigateToStreaming(onRequestWearablesPermission)
+  }
+
   fun navigateToDeviceSelection() {
     _uiState.update { it.copy(isStreaming = false) }
+  }
+
+  fun updateAppThemeMode(themeMode: AppThemeMode) {
+    _uiState.update { it.copy(appThemeMode = themeMode) }
+    settings.edit().putString(KEY_APP_THEME_MODE, themeMode.name).apply()
   }
 
   fun showDebugMenu() {

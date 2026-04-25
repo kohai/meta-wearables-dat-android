@@ -33,10 +33,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -121,15 +119,7 @@ fun OpenWebUIBridgeScaffold(
           },
       )
 
-      if (BuildConfig.DEBUG) {
-        FloatingActionButton(
-            onClick = { viewModel.showDebugMenu() },
-            modifier = Modifier.align(Alignment.CenterEnd),
-        ) {
-          Icon(Icons.Default.BugReport, contentDescription = "Debug Menu")
-        }
-
-        if (uiState.isDebugMenuVisible) {
+      if (BuildConfig.DEBUG && uiState.isDebugMenuVisible) {
           ModalBottomSheet(
               onDismissRequest = { viewModel.hideDebugMenu() },
               sheetState = bottomSheetState,
@@ -137,7 +127,6 @@ fun OpenWebUIBridgeScaffold(
           ) {
             MockDeviceKitScreen(modifier = Modifier.fillMaxSize())
           }
-        }
       }
     }
   }

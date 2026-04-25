@@ -29,10 +29,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.activity.viewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.meta.wearable.dat.core.Wearables
 import com.meta.wearable.dat.core.types.Permission
 import com.meta.wearable.dat.core.types.PermissionStatus
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.ui.OpenWebUIBridgeScaffold
+import com.meta.wearable.dat.externalsampleapps.openwebuibridge.ui.OpenWebUIBridgeTheme
 import com.meta.wearable.dat.externalsampleapps.openwebuibridge.wearables.WearablesViewModel
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CancellableContinuation
@@ -84,10 +86,13 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     setContent {
-      OpenWebUIBridgeScaffold(
-          viewModel = viewModel,
-          onRequestWearablesPermission = ::requestWearablesPermission,
-      )
+      val uiState = viewModel.uiState.collectAsStateWithLifecycle()
+      OpenWebUIBridgeTheme(themeMode = uiState.value.appThemeMode) {
+        OpenWebUIBridgeScaffold(
+            viewModel = viewModel,
+            onRequestWearablesPermission = ::requestWearablesPermission,
+        )
+      }
     }
   }
 
